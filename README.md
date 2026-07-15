@@ -47,6 +47,16 @@ rokit add w1nthinker/ghget
 mise use -g github:w1nthinker/ghget
 ```
 
+By default mise won't install a release until it's ~24h old (its
+`minimum_release_age` supply-chain cooldown), so a just-published version
+fails with "no versions found matching date filter." To install a fresh
+release once — without changing the setting for anything else — set the env
+var for that single command only:
+
+```sh
+MISE_MINIMUM_RELEASE_AGE=0 mise use -g github:w1nthinker/ghget
+```
+
 ### go install
 
 ```sh
