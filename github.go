@@ -7,11 +7,30 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 )
 
 const apiBase = "https://api.github.com"
+
+// token returns the auth token to use: GITHUB_TOKEN / GH_TOKEN env vars
+// win, then the gh CLI's stored login if gh is installed and authed.
+// Empty means unauthenticated (60 req/h rate limit).
+var token = sync.OnceValue(func() string {
+	if tok := os.Getenv("GITHUB_TOKEN"); tok != "" {
+		return tok
+	}
+	if tok := os.Getenv("GH_TOKEN"); tok != "" {
+		return tok
+	}
+	if out, err := exec.Command("gh", "auth", "token").Output(); err == nil {
+		return strings.TrimSpace(string(out))
+	}
+	return ""
+})
 
 // apiGet performs a GET with auth and retries transient 5xx responses
 // (GitHub throws 502s under load): up to 5 tries with linear backoff.
@@ -23,9 +42,7 @@ func apiGet(rawURL, accept string) (*http.Response, error) {
 			return nil, err
 		}
 		req.Header.Set("Accept", accept)
-		if tok := os.Getenv("GITHUB_TOKEN"); tok != "" {
-			req.Header.Set("Authorization", "Bearer "+tok)
-		} else if tok := os.Getenv("GH_TOKEN"); tok != "" {
+		if tok := token(); tok != "" {
 			req.Header.Set("Authorization", "Bearer "+tok)
 		}
 		resp, err := http.DefaultClient.Do(req)

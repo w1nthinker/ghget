@@ -30,8 +30,11 @@ path and records it in `.ghget.lock` (JSON, keyed by dest, diff-friendly).
 Existing files are overwritten (it's a re-vendor); ghget warns on stderr
 first if the dest has uncommitted git changes.
 
-Set `GITHUB_TOKEN` (or `GH_TOKEN`) for private repos and higher rate
-limits; unauthenticated works but GitHub caps it at 60 requests/hour.
+Auth (for private repos and 5,000 req/h instead of 60) is picked up
+automatically, in order: `GITHUB_TOKEN`, `GH_TOKEN`, then the [gh
+CLI](https://cli.github.com)'s stored login (`gh auth token`) if gh is
+installed and logged in. No token found = unauthenticated, which still
+works but GitHub caps it at 60 requests/hour.
 
 ## Install
 
