@@ -1,7 +1,8 @@
 # ghget
 
-Vendor files and folders from GitHub repos, pinned to exact commits and
-tracked in a lockfile. Single static binary, no dependencies.
+Ultra-lightweight, registry-free package manager — vendor anything
+straight from GitHub, pinned to a commit and lockfile-tracked. Single
+static binary, no dependencies.
 
 ## Usage
 
@@ -68,6 +69,30 @@ go install github.com/w1nthinker/ghget@latest
 
 Or grab a binary for your platform from
 [releases](https://github.com/w1nthinker/ghget/releases).
+
+## Roblox / Rojo / Luau
+
+ghget is an ultra-lightweight alternative to registry-based package
+managers like [Wally](https://wally.run) and [pesde](https://pesde.dev)
+for pulling in Luau code. There's no registry to publish to and no release
+to cut: whoever wrote the module just pushes to GitHub, and you consume it
+straight from a `blob`/`tree` URL, pinned to the exact commit.
+
+```sh
+# Vendor a shared Luau module into your Rojo source tree
+ghget https://github.com/someone/roblox-utils/tree/main/src/Signal src/shared/Signal
+
+# Later, pull the latest commit on that same ref
+ghget update src/shared/Signal
+```
+
+`.ghget.lock` records the exact commit per dependency, so your vendored
+Luau is reproducible and diffable in code review — commit it alongside your
+`rokit`/`mise` toolchain files. Good fit when the module you want was never
+published to a registry, or when you'd rather not maintain registry
+releases just to share code between places and games. Installs via
+[rokit](https://github.com/rojo-rbx/rokit) and mise (see above), the same
+tools that manage Rojo, Wally, and the rest of your Roblox toolchain.
 
 ## Releasing
 
