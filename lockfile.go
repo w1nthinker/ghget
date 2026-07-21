@@ -20,6 +20,8 @@ type Entry struct {
 	Dest      string `json:"dest"`
 	Type      string `json:"type"`
 	Commit    string `json:"commit"`
+	Gist      bool   `json:"gist,omitempty"`
+	Resolver  string `json:"resolver,omitempty"`
 	FetchedAt string `json:"fetchedAt"`
 }
 

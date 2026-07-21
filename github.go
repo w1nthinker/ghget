@@ -130,7 +130,12 @@ func download(owner, repo, commit, path, dest string, isDir bool) error {
 }
 
 func downloadFile(owner, repo, commit, path, dest string) error {
-	resp, err := apiGet(contentsURL(owner, repo, commit, path), "application/vnd.github.raw")
+	return saveURL(contentsURL(owner, repo, commit, path), dest)
+}
+
+// saveURL streams a raw-content URL to dest, creating parent dirs.
+func saveURL(rawURL, dest string) error {
+	resp, err := apiGet(rawURL, "application/vnd.github.raw")
 	if err != nil {
 		return err
 	}

@@ -13,6 +13,10 @@ ghget https://github.com/golang/go/blob/master/src/fmt/print.go
 # Download a folder into a specific dest
 ghget https://github.com/golang/go/tree/master/src/fmt vendor/fmt
 
+# Download a whole gist into a dir, or a single file via its #file- anchor
+ghget https://gist.github.com/octocat/6cad326836d38bd3a7ae vendor/hello
+ghget "https://gist.github.com/octocat/6cad326836d38bd3a7ae#file-hello_world-rb"
+
 # Re-fetch everything in .ghget.lock at its original ref
 ghget update
 
@@ -30,6 +34,30 @@ path and records it in `.ghget.lock` (JSON, keyed by dest, diff-friendly).
 
 Existing files are overwritten (it's a re-vendor); ghget warns on stderr
 first if the dest has uncommitted git changes.
+
+## Resolvers
+
+A resolver is an optional post-download transform, chosen per download
+with `-r`/`--resolver` and remembered in the lockfile entry, so `update`
+re-runs it automatically:
+
+```sh
+# Vendor a Lua module as .luau (built-in resolver, extension rename only)
+ghget https://github.com/kikito/inspect.lua/blob/master/inspect.lua -r lua2luau
+
+# Use your own: any command, run as `<command> <dest>` after each download
+ghget https://github.com/o/r/tree/main/src vendor/src -r my-resolver
+
+# Change or clear an entry's resolver on update
+ghget update vendor/src -r lua2luau
+ghget update vendor/src -r none
+```
+
+`lua2luau` ships with ghget and renames `*.lua` files to `*.luau`
+(contents untouched). Custom resolvers get the downloaded file or
+directory path as their only argument and should transform files in
+place — don't rename or move the dest itself, since that's the key in
+`.ghget.lock`.
 
 Auth (for private repos and 5,000 req/h instead of 60) is picked up
 automatically, in order: `GITHUB_TOKEN`, `GH_TOKEN`, then the [gh
