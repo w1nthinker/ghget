@@ -146,6 +146,41 @@ func TestStripResolver(t *testing.T) {
 	}
 }
 
+func TestCmdMv(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	os.WriteFile("mod.luau", []byte("x"), 0o644)
+	e := Entry{URL: "u", Owner: "o", Repo: "r", Ref: "main", Path: "mod.lua",
+		Dest: "mod.luau", Type: "file", Commit: "abc", FetchedAt: "2026-01-01T00:00:00Z"}
+	writeLock(Lock{e.Dest: e})
+
+	if err := cmdMv("nope", "x"); err == nil {
+		t.Error("mv of unknown dest should fail")
+	}
+	if err := cmdMv("mod.luau", "vendor/mod.luau"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat("vendor/mod.luau"); err != nil {
+		t.Fatal("file not moved:", err)
+	}
+	l, _ := readLock()
+	if _, ok := l["mod.luau"]; ok {
+		t.Error("old key still in lockfile")
+	}
+	got, ok := l["vendor/mod.luau"]
+	if !ok || got.Dest != "vendor/mod.luau" || got.Commit != "abc" {
+		t.Errorf("re-keyed entry wrong: %+v", got)
+	}
+
+	// Moving onto an existing entry's dest is refused.
+	os.WriteFile("other", []byte("x"), 0o644)
+	l["other"] = Entry{Dest: "other"}
+	writeLock(l)
+	if err := cmdMv("other", "vendor/mod.luau"); err == nil {
+		t.Error("mv onto existing entry should fail")
+	}
+}
+
 func TestLockUpsertRoundtrip(t *testing.T) {
 	t.Chdir(t.TempDir())
 

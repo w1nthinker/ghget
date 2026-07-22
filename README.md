@@ -23,6 +23,9 @@ ghget update
 # Re-fetch only specific dests
 ghget update vendor/fmt
 
+# Move a vendored file/dir (renames on disk and re-keys the lockfile entry)
+ghget mv vendor/fmt vendor/gofmt
+
 # Show what's vendored
 ghget list
 ```

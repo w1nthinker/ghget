@@ -18,6 +18,7 @@ import (
 const usage = `usage:
   ghget <github-url> [dest] [-r resolver]   download a blob/tree/gist URL and record it in .ghget.lock
   ghget update [-r resolver] [dest...]      re-fetch lockfile entries at their original refs
+  ghget mv <dest> <new-dest>                move a vendored file/dir and re-key its lockfile entry
   ghget list                                print lockfile entries
 
 resolvers (optional, remembered per entry, re-run on update):
@@ -35,6 +36,12 @@ func main() {
 	switch args[0] {
 	case "update":
 		err = cmdUpdate(args[1:], resolver)
+	case "mv":
+		if len(args) != 3 {
+			fmt.Fprintln(os.Stderr, usage)
+			os.Exit(2)
+		}
+		err = cmdMv(args[1], args[2])
 	case "list":
 		err = cmdList()
 	case "-h", "--help", "help":
@@ -244,6 +251,37 @@ func cmdUpdate(dests []string, resolver string) error {
 		lock[d] = e
 	}
 	return writeLock(lock)
+}
+
+// cmdMv moves a vendored dest on disk and re-keys its lockfile entry.
+func cmdMv(old, new string) error {
+	lock, err := readLock()
+	if err != nil {
+		return err
+	}
+	e, ok := lock[old]
+	if !ok {
+		return fmt.Errorf("no lockfile entry for %q", old)
+	}
+	if _, taken := lock[new]; taken {
+		return fmt.Errorf("lockfile entry %q already exists", new)
+	}
+	if dir := filepath.Dir(new); dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+	}
+	if err := os.Rename(old, new); err != nil {
+		return err
+	}
+	delete(lock, old)
+	e.Dest = new
+	lock[new] = e
+	if err := writeLock(lock); err != nil {
+		return err
+	}
+	fmt.Printf("%s -> %s\n", old, new)
+	return nil
 }
 
 func cmdList() error {
