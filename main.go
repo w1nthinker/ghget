@@ -19,6 +19,7 @@ const usage = `usage:
   ghget <github-url> [dest] [-r resolver]   download a blob/tree/gist URL and record it in .ghget.lock
   ghget update [-r resolver] [dest...]      re-fetch lockfile entries at their original refs
   ghget mv <dest> <new-dest>                move a vendored file/dir and re-key its lockfile entry
+  ghget rm <dest...>                        delete vendored files/dirs and their lockfile entries
   ghget list                                print lockfile entries
 
 resolvers (optional, remembered per entry, re-run on update):
@@ -42,6 +43,12 @@ func main() {
 			os.Exit(2)
 		}
 		err = cmdMv(args[1], args[2])
+	case "rm":
+		if len(args) < 2 {
+			fmt.Fprintln(os.Stderr, usage)
+			os.Exit(2)
+		}
+		err = cmdRm(args[1:])
 	case "list":
 		err = cmdList()
 	case "-h", "--help", "help":
@@ -282,6 +289,29 @@ func cmdMv(old, new string) error {
 	}
 	fmt.Printf("%s -> %s\n", old, new)
 	return nil
+}
+
+// cmdRm deletes vendored dests from disk and drops their lockfile entries.
+// All dests are validated against the lockfile before anything is deleted.
+func cmdRm(dests []string) error {
+	lock, err := readLock()
+	if err != nil {
+		return err
+	}
+	for _, d := range dests {
+		if _, ok := lock[d]; !ok {
+			return fmt.Errorf("no lockfile entry for %q", d)
+		}
+	}
+	for _, d := range dests {
+		warnIfDirty(d)
+		if err := os.RemoveAll(d); err != nil {
+			return err
+		}
+		delete(lock, d)
+		fmt.Printf("removed %s\n", d)
+	}
+	return writeLock(lock)
 }
 
 func cmdList() error {

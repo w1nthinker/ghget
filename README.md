@@ -26,6 +26,9 @@ ghget update vendor/fmt
 # Move a vendored file/dir (renames on disk and re-keys the lockfile entry)
 ghget mv vendor/fmt vendor/gofmt
 
+# Remove vendored files/dirs (deletes them and their lockfile entries)
+ghget rm vendor/fmt
+
 # Show what's vendored
 ghget list
 ```

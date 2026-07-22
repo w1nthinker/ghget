@@ -181,6 +181,38 @@ func TestCmdMv(t *testing.T) {
 	}
 }
 
+func TestCmdRm(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	os.WriteFile("mod.luau", []byte("x"), 0o644)
+	os.MkdirAll("vendor/fmt", 0o755)
+	os.WriteFile("vendor/fmt/print.go", []byte("x"), 0o644)
+	writeLock(Lock{
+		"mod.luau":   {Dest: "mod.luau", Type: "file"},
+		"vendor/fmt": {Dest: "vendor/fmt", Type: "dir"},
+	})
+
+	// Unknown dest fails before anything is deleted.
+	if err := cmdRm([]string{"mod.luau", "nope"}); err == nil {
+		t.Error("rm with unknown dest should fail")
+	}
+	if _, err := os.Stat("mod.luau"); err != nil {
+		t.Fatal("file deleted despite failed validation")
+	}
+
+	if err := cmdRm([]string{"mod.luau", "vendor/fmt"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{"mod.luau", "vendor/fmt"} {
+		if _, err := os.Stat(p); err == nil {
+			t.Errorf("%s still on disk", p)
+		}
+	}
+	if l, _ := readLock(); len(l) != 0 {
+		t.Errorf("lockfile not emptied: %v", l)
+	}
+}
+
 func TestLockUpsertRoundtrip(t *testing.T) {
 	t.Chdir(t.TempDir())
 
