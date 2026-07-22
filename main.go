@@ -140,6 +140,14 @@ func cmdGet(rawURL, dest, resolver string) error {
 		if err != nil {
 			return err
 		}
+		// A single-file gist with no #file- anchor downloads as that
+		// file, not as a one-file directory.
+		if t.Path == "" && len(files) == 1 {
+			for name := range files {
+				t.Path = name
+			}
+			t.IsDir = false
+		}
 		if t.Path != "" {
 			name, ok := matchGistFile(files, t.Path)
 			if !ok {

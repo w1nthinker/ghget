@@ -14,6 +14,7 @@ ghget https://github.com/golang/go/blob/master/src/fmt/print.go
 ghget https://github.com/golang/go/tree/master/src/fmt vendor/fmt
 
 # Download a whole gist into a dir, or a single file via its #file- anchor
+# (a gist with only one file downloads as that file, no dir wrapping)
 ghget https://gist.github.com/octocat/6cad326836d38bd3a7ae vendor/hello
 ghget "https://gist.github.com/octocat/6cad326836d38bd3a7ae#file-hello_world-rb"
 
